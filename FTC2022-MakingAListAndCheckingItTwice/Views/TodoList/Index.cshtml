@@ -1,0 +1,229 @@
+﻿@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+@using TodoListModels;
+@model IEnumerable<TodoListModels.TodoListItem>
+@functions
+{
+    public string GetAntiXsrfRequestToken()
+    {
+        return Xsrf.GetAndStoreTokens(Context).RequestToken;
+    }
+}
+@{
+    ViewData["Title"] = "My Tasks";
+}
+<div class="row">
+    <div class="col-sm-2">
+        <h1>@ViewData["Title"]:</h1>
+    </div>
+    <div class="col-sm-2"></div>
+    <div class="col-sm-2">
+        <button type="button" class="btn btn-success top-5" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+            Add Task
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-6 align-content-center">
+        <ul class="list-group">
+            @foreach (var item in Model)
+            {
+                var bgClassBase = "task-list-group-item d-flex justify-content-between align-items-center";
+                var bgClass = $"alert-primary {bgClassBase}";
+                switch (item.Status)
+                {
+                    case ItemStatus.Abandoned:
+                        bgClass = $"alert-danger {bgClassBase}";
+                        break;
+                    case ItemStatus.OnHold:
+                        bgClass = $"alert-warning {bgClassBase}";
+                        break;
+                    case ItemStatus.Completed:
+                        bgClass = $"alert-success {bgClassBase}";
+                        break;
+                    case ItemStatus.NotStarted:
+                        bgClass = $"alert-info {bgClassBase}";
+                        break;
+                    default:
+                        bgClass = $"alert-primary {bgClassBase}";
+                        break;
+                }
+
+                <li class="@bgClass">
+
+                    <span style="width:10%">@Html.DisplayFor(modelItem => item.IsCompleted)</span>
+                    <span style="width:60%">
+                        @Html.DisplayFor(modelItem => item.DetailText)
+                    </span>
+                    <span style="width:20%">
+                        <select asp-for="@item.Status" asp-items="@Html.GetEnumSelectList<ItemStatus>()" class="form-control" onchange="updateTaskStatus($(this), @item.Id)"></select>
+                    </span>
+                    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editTaskModal" data-bs-detailText="@item.DetailText" data-bs-detailId="@item.Id">
+                        Edit
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteItem('@item.Id', '@item.DetailText');">Delete</button>
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+
+<!-- add Task Modal -->
+<div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Add Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @{
+                    var newTodo = new TodoListItem();
+                }
+                <div class="form-group">
+                    <label asp-for="@newTodo.DetailText" class="control-label"></label>
+                    <input id="newTodoDetailText" asp-for=" @newTodo.DetailText" class="form-control" />
+                    <span asp-validation-for="@newTodo.DetailText" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="@newTodo.Status" class="control-label"></label>
+                    <select id="newTodoDetailStatus" asp-for="@newTodo.Status" asp-items="@Html.GetEnumSelectList<ItemStatus>()" class="form-control"></select>
+                    <span asp-validation-for="@newTodo.Status" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                <button id="saveAddTask" type="button" class="btn btn-success">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- edit Task Modal -->
+<div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="exampleModalLabel2" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel2">Edit Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <textarea id="modalEditTaskDetail" style="width:100%;"></textarea>
+                        <input id="modalEditTaskId" type="hidden" />
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                <button id="saveEditTask" type="button" class="btn btn-success">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+    {
+    <script>
+        $(function (){
+            $('#addTodoListItem').modal('hide');
+        });
+
+        $('#editTaskModal').on('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var detailText = button.getAttribute('data-bs-detailtext');
+            var detailId = button.getAttribute('data-bs-detailid');
+            //console.log("detailText", detailText);
+            //console.log("detailId", detailId )
+            var modal = $(this);
+            $('#modalEditTaskDetail').val(detailText);
+            $('#modalEditTaskId').val(detailId);
+        })
+
+        $('#saveEditTask').on('click', function () {
+            var dText = $('#modalEditTaskDetail').val();
+            var dId = $('#modalEditTaskId').val();
+            console.log("Detail Text", dText);
+            console.log("Detail Id", dId);
+            $.ajax({
+                url: '@Url.Action("UpdateTodoListItem", "TodoList")',
+                type: 'POST',
+                headers: { "RequestVerificationToken": "@GetAntiXsrfRequestToken()" },
+                data: {"detailId": dId, "detailText": dText },
+                success: function(result) {
+                    $('#editTaskModal').modal('hide');
+                    redirectToIndex();
+                },
+                error: function(result) {
+                    alert("Failed to update todo item, please try again!");
+                }
+            });
+        });
+
+        function redirectToIndex(){
+            //cheesy easy way to get the updates to show:
+            var url = '@Url.Action("Index", "TodoList")';
+            window.location.href = url;
+        }
+
+        function updateTaskStatus(e, taskId)
+        {
+            var newStatus = e.val();
+            console.log("Task ID", taskId);
+            console.log("Task Value", newStatus);
+            $.ajax({
+                url: '@Url.Action("UpdateTodoListItemStatus", "TodoList")',
+                type: 'POST',
+                headers: { "RequestVerificationToken": "@GetAntiXsrfRequestToken()" },
+                data: { "detailId": taskId, "newStatus": newStatus },
+                success: function(result) {
+                    redirectToIndex();
+                },
+                error: function(result) {
+                    alert("Failed to update status, please try again!");
+                }
+            });
+        }
+
+        $('#saveAddTask').on('click', function () {
+            var newText = $('#newTodoDetailText').val();
+            var newStatus = $('#newTodoDetailStatus').val();
+
+            console.log("text", newText);
+            console.log("status", newStatus);
+            $.ajax({
+                url: '@Url.Action("AddTodoListItem", "TodoList")',
+                type: 'POST',
+                headers: { "RequestVerificationToken": "@GetAntiXsrfRequestToken()" },
+                data: { "text": newText, "status": newStatus },
+                success: function(result) {
+                    redirectToIndex();
+                },
+                error: function(result) {
+                    alert("Failed to create new todo list item, please try again!");
+                }
+            });
+        });
+
+        function deleteItem(id, text) {
+            var shouldDelete = confirm("Are you sure you want to delete todo list item [" + text + "]?");
+            if (shouldDelete)
+            {
+                $.ajax({
+                    url: '@Url.Action("Delete", "TodoList")',
+                    type: 'POST',
+                    headers: { "RequestVerificationToken": "@GetAntiXsrfRequestToken()" },
+                    data: { "id": parseInt(id) },
+                    success: function(result) {
+                        redirectToIndex();
+                    },
+                    error: function(result) {
+                        alert("Failed to delete the item, please try again!");
+                    }
+                });
+            }
+        }
+    </script>
+}
