@@ -23,12 +23,11 @@ namespace FTC2022_MakingAListAndCheckingItTwice
 
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-            /*
+            
             builder.Services.AddAuthentication().AddMicrosoftAccount(options => {
                 options.ClientId = builder.Configuration["Authorization:Microsoft:ClientID"];
                 options.ClientSecret = builder.Configuration["Authorization:Microsoft:ClientSecret"];
             });
-            */
 
             builder.Services.AddDefaultIdentity<TodoListUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddRoles<IdentityRole>()

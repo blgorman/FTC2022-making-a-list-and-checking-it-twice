@@ -9,9 +9,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TodoListData;
 using TodoListModels;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace FTC2022_MakingAListAndCheckingItTwice.Controllers
 {
+    [Authorize]
     public class TodoListController : Controller
     {
         private readonly TodoListDataContext _context;
@@ -22,20 +25,23 @@ namespace FTC2022_MakingAListAndCheckingItTwice.Controllers
         }
 
         // TODO: Utilize this method to get the current user id:
-        // protected async Task<string> GetCurrentUserId()
-        // {
-        //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        //     return userId;
-        // }
+        protected async Task<string> GetCurrentUserId()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return userId;
+        }
 
         // GET: TodoList
         public async Task<IActionResult> Index()
         {
-            return _context.ToDoItems != null ?
-                        View(await _context.ToDoItems.ToListAsync()) :
-                        Problem("Entity set 'TodoListDataContext.ToDoItems'  is null.");
+            var userId = await GetCurrentUserId();
+            var items = await _context.ToDoItems.Where(x => x.UserId == userId).ToListAsync();
+            return items != null ?
+                        View(items) :
+                        View(new List<TodoListItem>());
         }
 
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminIndex()
         {
               return _context.ToDoItems != null ? 
@@ -43,6 +49,7 @@ namespace FTC2022_MakingAListAndCheckingItTwice.Controllers
                           Problem("Entity set 'TodoListDataContext.ToDoItems'  is null.");
         }
 
+        [Authorize(Roles = "Admin")]
         // GET: TodoList/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -61,6 +68,7 @@ namespace FTC2022_MakingAListAndCheckingItTwice.Controllers
             return View(todoListItem);
         }
 
+        [Authorize(Roles = "Admin")]
         // GET: TodoList/Create
         public IActionResult Create()
         {
@@ -72,6 +80,7 @@ namespace FTC2022_MakingAListAndCheckingItTwice.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([Bind("Id,DetailText,IsCompleted,Status")] TodoListItem todoListItem)
         {
             if (ModelState.IsValid)
@@ -84,6 +93,7 @@ namespace FTC2022_MakingAListAndCheckingItTwice.Controllers
         }
 
         // GET: TodoList/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null || _context.ToDoItems == null)
@@ -104,6 +114,7 @@ namespace FTC2022_MakingAListAndCheckingItTwice.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,DetailText,IsCompleted,Status")] TodoListItem todoListItem)
         {
             if (id != todoListItem.Id)
@@ -188,7 +199,9 @@ namespace FTC2022_MakingAListAndCheckingItTwice.Controllers
                 return Content("Todo Item Not Found!", MediaTypeNames.Text.Plain);
             }
 
-            var item = await _context.ToDoItems.SingleOrDefaultAsync(x => x.Id == todoId);
+
+            var userId = await GetCurrentUserId();
+            var item = await _context.ToDoItems.SingleOrDefaultAsync(x => x.Id == todoId && x.UserId == userId);
             if (item is null)
             {
                 Response.StatusCode = (int)HttpStatusCode.NotFound;
@@ -234,7 +247,8 @@ namespace FTC2022_MakingAListAndCheckingItTwice.Controllers
                 return Content("Todo Item Not Found!", MediaTypeNames.Text.Plain);
             }
 
-            var item = await _context.ToDoItems.SingleOrDefaultAsync(x => x.Id == todoId);
+            var userId = await GetCurrentUserId();
+            var item = await _context.ToDoItems.SingleOrDefaultAsync(x => x.Id == todoId && x.UserId == userId);
             if (item is null)
             {
                 Response.StatusCode = (int)HttpStatusCode.NotFound;
@@ -266,6 +280,7 @@ namespace FTC2022_MakingAListAndCheckingItTwice.Controllers
 
             var item = new TodoListItem();
             item.DetailText = text;
+            item.UserId = await GetCurrentUserId();
 
             var newItemStatus = (ItemStatus)updStatus;
             item.Status = newItemStatus;

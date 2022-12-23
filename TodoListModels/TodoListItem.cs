@@ -20,7 +20,7 @@ namespace TodoListModels
         public ItemStatus Status { get; set; } = ItemStatus.NotStarted;
 
         //TODO: Add the User ID here for tracking
-        //[StringLength(450)]
-        //public string UserId { get; set; }
+        [StringLength(450)]
+        public string UserId { get; set; }
     }
 }

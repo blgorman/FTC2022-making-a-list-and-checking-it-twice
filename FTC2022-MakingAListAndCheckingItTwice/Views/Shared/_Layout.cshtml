@@ -28,11 +28,21 @@
                             <a class="nav-link text-dark @(ViewContext?.RouteData?.Values["Action"]?.ToString() == "Privacy"
                                                 ? "active-link" : "")" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
-                        @* TODO: Make sure user is authorized to use this link!*@
-                        <li class="nav-item">
-                            <a class="nav-link text-dark @(ViewContext?.RouteData?.Values["Controller"]?.ToString() == "TodoList"
-                                        ? "active-link" : "")" asp-area="" asp-controller="TodoList" asp-action="Index">My Tasks</a>
-                        </li>
+                        @if (User?.Identity?.Name?.ToString().Length > 0)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark @(ViewContext?.RouteData?.Values["Controller"]?.ToString() == "TodoList"
+                                ? "active-link" : "")" asp-area="" asp-controller="TodoList" asp-action="Index">My Tasks</a>
+                            </li>
+
+                            @if (User?.IsInRole("Admin") ?? false)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark @(ViewContext?.RouteData?.Values["Controller"]?.ToString() == "TodoList"
+                                        ? "active-link" : "")" asp-area="" asp-controller="TodoList" asp-action="AdminIndex">Administer</a>
+                                </li>
+                            }
+                        }
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>

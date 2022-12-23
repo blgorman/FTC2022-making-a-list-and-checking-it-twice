@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TodoListData;
 
@@ -10,9 +11,11 @@ using TodoListData;
 namespace TodoListData.Migrations
 {
     [DbContext(typeof(TodoListDataContext))]
-    partial class TodoListDataContextModelSnapshot : ModelSnapshot
+    [Migration("20221223123357_create-userid-field-todolistitem")]
+    partial class createuseridfieldtodolistitem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
