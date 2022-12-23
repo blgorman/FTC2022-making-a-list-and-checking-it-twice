@@ -41,7 +41,7 @@ namespace FTC2022_MakingAListAndCheckingItTwice
             /* Uncomment below to Enable automatic migrations (use with caution!) */
             /***************************************************/
 
-            /*
+            
             
             var identityContextOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
                                                 .UseSqlServer(connectionString).Options;
@@ -56,7 +56,7 @@ namespace FTC2022_MakingAListAndCheckingItTwice
                 context.Database.Migrate();
             }
             
-            */
+            
             /**************************************************/
 
             /* UsersRolesService */
