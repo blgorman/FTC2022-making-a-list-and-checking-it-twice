@@ -59,7 +59,7 @@ namespace FTC2022_MakingAListAndCheckingItTwice
             /**************************************************/
 
             /* UsersRolesService */
-            //builder.Services.AddScoped<IUsersRolesService, UsersRolesService>();
+            builder.Services.AddScoped<IUsersRolesService, UsersRolesService>();
 
             var app = builder.Build();
 

@@ -10,7 +10,8 @@ namespace FTC2022_MakingAListAndCheckingItTwice.Data
         private readonly UserManager<TodoListUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
-        public UsersRolesService(UserManager<TodoListUser> userManager, RoleManager<IdentityRole> roleManager)
+        public UsersRolesService(UserManager<TodoListUser> userManager
+                                    , RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _roleManager = roleManager;
